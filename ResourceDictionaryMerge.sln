@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResourceDictionaryMerge", "ResourceDictionaryMerge\ResourceDictionaryMerge.csproj", "{4D94483E-B34D-409D-ACEA-B2D26195CC8E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResourceMergeDemo", "ResourceMergeDemo\ResourceMergeDemo.csproj", "{81914BAC-54C1-4C74-B587-B28CA97328CE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4D94483E-B34D-409D-ACEA-B2D26195CC8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D94483E-B34D-409D-ACEA-B2D26195CC8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D94483E-B34D-409D-ACEA-B2D26195CC8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D94483E-B34D-409D-ACEA-B2D26195CC8E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81914BAC-54C1-4C74-B587-B28CA97328CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81914BAC-54C1-4C74-B587-B28CA97328CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81914BAC-54C1-4C74-B587-B28CA97328CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81914BAC-54C1-4C74-B587-B28CA97328CE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
