@@ -89,7 +89,7 @@ namespace ResourceDictionaryMerge
             var key = element.Attribute((XNamespace)XamlLanguageNamespace + "Key")?.Value;
             if (string.IsNullOrEmpty(key))
             {
-                if (element.Name == "Style")
+                if (element.Name.LocalName == "Style")
                 {
                     key = element.Attribute("TargetType")?.Value;
                     if (key?.StartsWith(XTypePrefix) == true)
@@ -97,7 +97,7 @@ namespace ResourceDictionaryMerge
                         key = key.Substring(XTypePrefix.Length, key.Length - XTypePrefix.Length - 1);
                     }
                 }
-                else if (element.Name == "DataTemplate")
+                else if (element.Name.LocalName == "DataTemplate")
                 {
                     key = element.Attribute("DataType")?.Value;
                 }
