@@ -95,7 +95,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>$(SolutionDir)ResourceDictionaryMerge\bin\Debug\ResourceDictionaryMerge.exe -p $(ProjectDir) -n $(ProjectName) -s Bundle.xaml -t Bundle.Merged1.xaml</PreBuildEvent>
+    <PreBuildEvent>$(SolutionDir)ResourceDictionaryMerge\bin\Debug\ResourceDictionaryMerge.exe -p $(ProjectDir) -n $(ProjectName) -s Bundle.xaml -t Bundle.Merged.xaml</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

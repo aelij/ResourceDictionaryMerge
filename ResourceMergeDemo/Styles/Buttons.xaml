@@ -3,7 +3,17 @@
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="Brushes.xaml" />
     </ResourceDictionary.MergedDictionaries>
-    <Style x:Key="ButtonStyle1" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource Brush1}" />
+    <Style x:Key="ButtonStyle1"
+           TargetType="Button">
+        <Setter Property="Background"
+                Value="{StaticResource Brush1}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Padding="{Binding ElementName=X,
+                        Path=Y}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 </ResourceDictionary>

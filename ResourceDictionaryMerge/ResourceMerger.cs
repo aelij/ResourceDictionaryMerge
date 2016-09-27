@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Xml;
+using System.Xml.Linq;
 
 namespace ResourceDictionaryMerge
 {
@@ -21,41 +21,39 @@ namespace ResourceDictionaryMerge
 
             projectName = string.IsNullOrEmpty(projectName) ? Path.GetFileName(Path.GetDirectoryName(projectPath)) : projectName;
 
-            var sourceFilePath = projectPath + relativeSourceFilePath;
+            var sourceFilePath = Path.Combine(projectPath, relativeSourceFilePath);
 
             if (!File.Exists(sourceFilePath))
                 throw new InvalidOperationException("Source file does not exist: " + sourceFilePath);
 
-            var sourceDoc = new XmlDocument();
-            sourceDoc.Load(sourceFilePath);
+            var sourceDoc = XDocument.Load(sourceFilePath);
 
-            var sourceRoot = sourceDoc.DocumentElement;
+            var sourceRoot = sourceDoc.Root;
             Debug.Assert(sourceRoot != null, "sourceRoot != null");
 
-            var defaultNameSpace = sourceRoot.GetNamespaceOfPrefix(string.Empty);
+            var defaultNameSpace = sourceRoot.GetDefaultNamespace();
 
-            var outputDoc = new XmlDocument();
-            outputDoc.LoadXml("<" + ResourceDictionaryName + " xmlns=\"" + defaultNameSpace + "\"/>");
+            var outputDoc = XDocument.Parse("<" + ResourceDictionaryName + " xmlns=\"" + defaultNameSpace + "\"/>");
 
             var documents = new Dictionary<string, ResourceDictionaryInfo>();
             var namespaces = new Dictionary<string, string>();
             PrepareDocuments(documents, namespaces, projectPath, projectName, relativeSourceFilePath);
 
-            var outputRoot = outputDoc.DocumentElement;
+            var outputRoot = outputDoc.Root;
             Debug.Assert(outputRoot != null, "outputRoot != null");
 
             var keys = new Dictionary<string, string>();
 
             foreach (var item in documents.Values.TopologicalSort(item => item.Dependencies.Select(x => documents[x])))
             {
-                var documentRoot = item.Document.DocumentElement;
+                var documentRoot = item.Document.Root;
                 Debug.Assert(documentRoot != null, "documentRoot != null");
 
-                foreach (var attribute in documentRoot.Attributes.OfType<XmlAttribute>())
-                    outputRoot.SetAttribute(attribute.Name, attribute.Value);
+                foreach (var attribute in documentRoot.Attributes())
+                    outputRoot.SetAttributeValue(attribute.Name, attribute.Value);
 
-                var children = documentRoot.ChildNodes.OfType<XmlElement>()
-                    .Where(e => !e.LocalName.StartsWith(ResourceDictionaryName));
+                var children = documentRoot.Elements()
+                    .Where(e => !e.Name.LocalName.StartsWith(ResourceDictionaryName));
 
                 foreach (var child in children)
                 {
@@ -70,8 +68,7 @@ namespace ResourceDictionaryMerge
 
                     keys.Add(key, item.Source);
                     // TODO: adjust namespaces
-                    var newChild = outputDoc.ImportNode(child, deep: true);
-                    outputRoot.AppendChild(newChild);
+                    outputRoot.Add(child);
                 }
             }
 
@@ -84,29 +81,30 @@ namespace ResourceDictionaryMerge
                     return;
             }
 
-            outputDoc.Save(projectPath + relativeOutputFilePath);
+            outputDoc.Save(Path.Combine(projectPath, relativeOutputFilePath));
         }
 
-        private static string GetResourceKey(XmlElement element)
+        private static string GetResourceKey(XElement element)
         {
-            var key = element.GetAttribute("Key", XamlLanguageNamespace);
+            var key = element.Attribute((XNamespace)XamlLanguageNamespace + "Key")?.Value;
             if (string.IsNullOrEmpty(key))
             {
                 if (element.Name == "Style")
                 {
-                    key = element.GetAttribute("TargetType");
-                    if (key.StartsWith(XTypePrefix))
+                    key = element.Attribute("TargetType")?.Value;
+                    if (key?.StartsWith(XTypePrefix) == true)
                     {
                         key = key.Substring(XTypePrefix.Length, key.Length - XTypePrefix.Length - 1);
                     }
                 }
                 else if (element.Name == "DataTemplate")
                 {
-                    key = element.GetAttribute("DataType");
+                    key = element.Attribute("DataType")?.Value;
                 }
             }
 
-            Trace.Assert(!string.IsNullOrEmpty(key), "!string.IsNullOrEmpty(key);");
+            Trace.Assert(key != null, "key != null");
+
             return key;
         }
 
@@ -159,10 +157,9 @@ namespace ResourceDictionaryMerge
         {
             var absoluteSourceFilePath = Path.Combine(projectPath, relativeSourceFilePath);
 
-            var doc = new XmlDocument();
-            doc.Load(absoluteSourceFilePath);
+            var doc = XDocument.Load(absoluteSourceFilePath);
 
-            var docRoot = doc.DocumentElement;
+            var docRoot = doc.Root;
             Debug.Assert(docRoot != null, "docRoot != null");
 
             ResourceDictionaryInfo resourceDictionaryInfo;
@@ -177,22 +174,23 @@ namespace ResourceDictionaryMerge
             AdjustXamlNamespaces(namespaces, docRoot, resourceDictionaryInfo);
 
             // ReSharper disable once AssignNullToNotNullAttribute
-            foreach (var dict in docRoot.GetElementsByTagName(ResourceDictionaryName).OfType<XmlElement>())
+            foreach (var dict in docRoot.Descendants(docRoot.GetDefaultNamespace() + ResourceDictionaryName))
             {
-                var sourceFilePath = BuildPath(projectName, projectPath, absoluteSourceFilePath, dict.GetAttribute("Source"));
+                // ReSharper disable once PossibleNullReferenceException
+                var sourceFilePath = BuildPath(projectName, projectPath, absoluteSourceFilePath, dict.Attribute("Source").Value);
                 resourceDictionaryInfo.Dependencies.Add(sourceFilePath);
                 PrepareDocuments(documents, namespaces, projectPath, projectName,
                     sourceFilePath);
             }
         }
 
-        private static void AdjustXamlNamespaces(Dictionary<string, string> namespaces, XmlElement docRoot, ResourceDictionaryInfo resourceDictionaryInfo)
+        private static void AdjustXamlNamespaces(Dictionary<string, string> namespaces, XElement docRoot, ResourceDictionaryInfo resourceDictionaryInfo)
         {
-            foreach (var attribute in docRoot.Attributes.Cast<XmlAttribute>())
+            foreach (var attribute in docRoot.Attributes())
             {
-                if (attribute.NamespaceURI != XmlNs) continue;
+                if (attribute.Name.Namespace != XmlNs) continue;
 
-                var name = attribute.LocalName;
+                var name = attribute.Name.LocalName;
                 string xamlNamespace;
                 if (namespaces.TryGetValue(name, out xamlNamespace))
                 {
@@ -203,7 +201,7 @@ namespace ResourceDictionaryMerge
                         {
                             name += index++;
                         } while (namespaces.ContainsKey(name));
-                        resourceDictionaryInfo.NamespaceMap.Add(attribute.LocalName, name);
+                        resourceDictionaryInfo.NamespaceMap.Add(attribute.Name.LocalName, name);
                         namespaces.Add(name, attribute.Value);
 
                         // TODO: handle namespaces
@@ -228,11 +226,11 @@ namespace ResourceDictionaryMerge
         private class ResourceDictionaryInfo
         {
             public string Source { get; }
-            public XmlDocument Document { get; }
+            public XDocument Document { get; }
             public List<string> Dependencies { get; }
             public Dictionary<string, string> NamespaceMap { get; }
 
-            public ResourceDictionaryInfo(string source, XmlDocument document)
+            public ResourceDictionaryInfo(string source, XDocument document)
             {
                 Source = source;
                 Document = document;
